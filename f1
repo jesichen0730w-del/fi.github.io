@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>中文可视化交互网页</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #fdf2f8 0%, #eef2ff 42%, #f8fafc 100%);
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: min(1200px, 92%);
+      margin: 0 auto;
+      padding: 48px 0 60px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(148, 163, 184, 0.12);
+      font-size: 14px;
+      color: #475569;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .title {
+      margin-top: 20px;
+      font-size: clamp(32px, 5vw, 54px);
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      animation: fadeUp 0.75s ease both;
+    }
+
+    .subtitle {
+      margin-top: 16px;
+      max-width: 760px;
+      font-size: 18px;
+      line-height: 1.9;
+      color: #64748b;
+      animation: fadeUp 0.9s ease both;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      margin-top: 40px;
+    }
+
+    .top-card {
+      position: relative;
+      border: none;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 18px 50px rgba(148, 163, 184, 0.18);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .top-card:nth-child(2) { animation-delay: 0.08s; }
+    .top-card:nth-child(3) { animation-delay: 0.16s; }
+
+    .top-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 60px rgba(139, 92, 246, 0.18);
+    }
+
+    .top-card.active {
+      box-shadow: 0 26px 70px rgba(139, 92, 246, 0.24);
+      outline: 2px solid rgba(196, 181, 253, 0.9);
+    }
+
+    .top-card .bar {
+      height: 8px;
+      background: linear-gradient(90deg, #8b5cf6, #d946ef, #ec4899);
+    }
+
+    .top-card .content {
+      padding: 28px;
+    }
+
+    .top-card .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .letter {
+      font-size: 42px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .name {
+      margin-top: 8px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .desc {
+      margin-top: 10px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #64748b;
+    }
+
+    .arrow {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: #f1f5f9;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .top-card:hover .arrow,
+    .top-card.active .arrow {
+      background: #ede9fe;
+      color: #7c3aed;
+      transform: translateX(4px);
+    }
+
+    .result-wrap {
+      margin-top: 42px;
+      min-height: 280px;
+    }
+
+    .placeholder,
+    .result-card {
+      border-radius: 30px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 60px rgba(139, 92, 246, 0.12);
+    }
+
+    .placeholder {
+      border: 2px dashed #cbd5e1;
+      text-align: center;
+      padding: 70px 24px;
+      color: #64748b;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .placeholder h3 {
+      font-size: 24px;
+      color: #334155;
+      margin-bottom: 12px;
+    }
+
+    .placeholder p {
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .result-card {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      animation: cardPop 0.35s ease;
+    }
+
+    .result-left {
+      background: linear-gradient(135deg, #7c3aed 0%, #d946ef 52%, #ec4899 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 36px;
+      text-align: center;
+    }
+
+    .result-left .small {
+      font-size: 13px;
+      letter-spacing: 0.35em;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .result-left .big {
+      margin-top: 12px;
+      font-size: 84px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .result-right {
+      padding: 36px 40px;
+    }
+
+    .mini-badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #f5f3ff;
+      color: #7c3aed;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .result-title {
+      margin-top: 16px;
+      font-size: 34px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .result-text {
+      margin-top: 18px;
+      font-size: 17px;
+      line-height: 2;
+      color: #64748b;
+      max-width: 760px;
+    }
+
+    .tags {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .tag {
+      padding: 16px 14px;
+      text-align: center;
+      border-radius: 20px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes cardPop {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .result-card {
+        grid-template-columns: 1fr;
+      }
+
+      .result-left {
+        padding: 30px 20px;
+      }
+
+      .result-left .big {
+        font-size: 64px;
+      }
+
+      .result-right {
+        padding: 28px 22px;
+      }
+
+      .tags {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">✨ 中文可视化交互网页</div>
+    <h1 class="title">点击上层条框，展开对应下层条框</h1>
+    <p class="subtitle">
+      页面初始展示 A、B、C 三个可点击条框；分别点击后，会联动展示 D、E、F 条框内容。整体采用柔和渐变、卡片式布局和细腻过渡动画，观感清爽，适合继续扩展为功能导航页、流程展示页或层级交互页。
+    </p>
+
+    <div class="card-grid">
+      <button class="top-card" data-key="A">
+        <div class="bar"></div>
+        <div class="content">
+          <div class="row">
+            <div>
+              <div class="letter">A</div>
+              <div class="name">A 条框</div>
+              <div class="desc">点击后显示对应的 D 条框内容</div>
+            </div>
+            <div class="arrow">➜</div>
+          </div>
+        </div>
+      </button>
+
+      <button class="top-card" data-key="B">
+        <div class="bar"></div>
+        <div class="content">
+          <div class="row">
+            <div>
+              <div class="letter">B</div>
+              <div class="name">B 条框</div>
+              <div class="desc">点击后显示对应的 E 条框内容</div>
+            </div>
+            <div class="arrow">➜</div>
+          </div>
+        </div>
+      </button>
+
+      <button class="top-card" data-key="C">
+        <div class="bar"></div>
+        <div class="content">
+          <div class="row">
+            <div>
+              <div class="letter">C</div>
+              <div class="name">C 条框</div>
+              <div class="desc">点击后显示对应的 F 条框内容</div>
+            </div>
+            <div class="arrow">➜</div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <div class="result-wrap" id="resultWrap">
+      <div class="placeholder">
+        <h3>请先点击上方任意一个条框</h3>
+        <p>点击 A / B / C 后，将分别展示 D / E / F 的下层条框内容。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dataMap = {
+      A: {
+        from: 'A',
+        key: 'D',
+        title: 'D 条框',
+        text: '这是由 A 条框点击后展开的 D 条框内容。页面当前采用层级式联动展示方式，可以清晰体现“点击上层—显示下层”的交互逻辑，适合后续继续补充文字说明、图片、按钮、跳转链接或更多层级内容。'
+      },
+      B: {
+        from: 'B',
+        key: 'E',
+        title: 'E 条框',
+        text: '这是由 B 条框点击后展开的 E 条框内容。你可以把这里替换成模块说明、业务介绍、流程节点信息，或者做成知识分类入口，让页面既美观又具备实际展示功能。'
+      },
+      C: {
+        from: 'C',
+        key: 'F',
+        title: 'F 条框',
+        text: '这是由 C 条框点击后展开的 F 条框内容。当前版本注重视觉层次和交互动效，后续还可以继续增加悬浮提示、弹窗详情、二级跳转、图标装饰或更复杂的联动逻辑。'
+      }
+    };
+
+    const cards = document.querySelectorAll('.top-card');
+    const resultWrap = document.getElementById('resultWrap');
+
+    function renderResult(item) {
+      resultWrap.innerHTML = `
+        <div class="result-card">
+          <div class="result-left">
+            <div>
+              <div class="small">已展开</div>
+              <div class="big">${item.key}</div>
+            </div>
+          </div>
+          <div class="result-right">
+            <div class="mini-badge">来自 ${item.from} 条框的联动展示</div>
+            <div class="result-title">${item.title}</div>
+            <div class="result-text">${item.text}</div>
+            <div class="tags">
+              <div class="tag">层级清晰</div>
+              <div class="tag">动画流畅</div>
+              <div class="tag">界面美观</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        cards.forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        const key = card.getAttribute('data-key');
+        renderResult(dataMap[key]);
+      });
+    });
+  </script>
+</body>
+</html>
